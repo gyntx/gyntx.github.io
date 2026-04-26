@@ -175,11 +175,11 @@ async function parseXlsx(file, year, month) {
     for (const r of rows) {
       const label = String(r[1] || '').trim();
       const val   = parseFloat(String(r[3] || '').replace(/,/g, '')) || 0;
-      if (label.includes('T O T A L  OCCUPIED'))                                          summary.totalOccupied    = val;
-      else if (label.includes('GROSS ROOM REVENUE') && !label.includes('AVERAGE') && !label.includes('NETT')) summary.grossRoomRevenue = val;
-      else if (label.includes('RENTAL ITEM REVENUE'))                                     summary.rentalRevenue    = val;
-      else if (label.includes('OTHER ROOM REVENUE'))                                      summary.otherRoomRevenue = val;
-      else if (label.includes('FB REVENUE'))                                              summary.fbRevenue        = val;
+      if (label.includes('T O T A L  OCCUPIED'))                                                                    summary.totalOccupied    = val;
+      else if (label.includes('GROSS ROOM REVENUE') && !label.includes('AVERAGE') && !label.includes('NETT') && !label.includes('TOTAL GROSS')) summary.grossRoomRevenue = val;
+      else if (label === 'RENTAL ITEM REVENUE')                                                                      summary.rentalRevenue    = val;
+      else if (label === 'OTHER ROOM REVENUE')                                                                       summary.otherRoomRevenue = val;
+      else if (label === 'FB REVENUE')                                                                               summary.fbRevenue        = val;
     }
     if (!summary.totalOccupied)    summary.totalOccupied    = guests.length;
     if (!summary.grossRoomRevenue) summary.grossRoomRevenue = guests.reduce((s, g) => s + g.price, 0);
