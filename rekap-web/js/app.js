@@ -264,8 +264,8 @@ function buildOccRecap(wb, dailyData, monthLabel, totalRooms) {
     const sold      = s.totalOccupied;
     const avail     = totalRooms;
     const roomRev   = s.grossRoomRevenue;
-    const otherRoom = s.rentalRevenue + s.otherRoomRevenue;
-    const other     = s.fbRevenue;
+    const otherRoom = s.otherRoomRevenue;
+    const other     = s.rentalRevenue + s.fbRevenue;
     const total     = roomRev + otherRoom + other;
     const occ       = avail ? sold / avail : 0;
     const arr       = sold  ? roomRev / sold : 0;
