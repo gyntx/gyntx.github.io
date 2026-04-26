@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rekap Bulanan Hotel</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📊 Rekap Bulanan Hotel</h1>
+      <p>Upload file laporan harian (.xlsx) untuk generate rekap otomatis</p>
+    </header>
+
+    <main>
+      <!-- Upload Section -->
+      <div class="card" id="upload-section">
+        <div class="drop-zone" id="drop-zone">
+          <div class="drop-icon">📁</div>
+          <p>Drag & drop file <strong>.xlsx</strong> di sini</p>
+          <p class="sub">atau</p>
+          <button class="btn btn-outline" id="pick-btn" type="button">Pilih File</button>
+          <input type="file" id="file-input" accept=".xlsx" hidden />
+        </div>
+      </div>
+
+      <!-- Config Section -->
+      <div class="card hidden" id="config-section">
+        <div class="config-header">
+          <div class="file-detected">
+            <span class="file-icon">📄</span>
+            <div>
+              <div class="file-name" id="file-name"></div>
+              <div class="file-meta" id="file-meta"></div>
+            </div>
+          </div>
+          <span class="badge">✨ Auto-detected</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="month-picker">📅 Bulan & Tahun</label>
+            <input type="month" id="month-picker" />
+          </div>
+          <div class="form-group">
+            <label for="total-rooms">🏨 Total Kamar Tersedia</label>
+            <input type="number" id="total-rooms" min="1" placeholder="14" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="process-btn">🚀 Proses & Generate Rekap</button>
+      </div>
+
+      <!-- Progress Section -->
+      <div class="card hidden" id="progress-section">
+        <h2>⏳ Memproses...</h2>
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <p id="progress-text">Membaca file...</p>
+        <div class="log" id="log"></div>
+      </div>
+
+      <!-- Result Section -->
+      <div class="card hidden" id="result-section">
+        <h2>✅ Rekap Berhasil Dibuat!</h2>
+        <div class="summary-grid" id="summary-grid"></div>
+        <button class="btn btn-success" id="download-btn">⬇️ Download Rekap Bulanan (.xlsx)</button>
+        <button class="btn btn-outline" id="reset-btn">🔄 Upload File Baru</button>
+      </div>
+    </main>
+
+    <footer>
+      <p>Dibuat dengan ❤️ — Proses sepenuhnya di browser, data tidak dikirim ke server</p>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.3.0/dist/exceljs.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
