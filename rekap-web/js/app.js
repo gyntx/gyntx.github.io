@@ -386,8 +386,7 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
   ws.getCell('K3').font  = { bold: true };
   ws.getCell('K3').alignment = { horizontal: 'right' };
 
-  function writeTable(startRow, bgArgb, isArr) {
-    // Header
+  function writeTable(startRow, bgArgb, isArr, srcDict) {
     hdrCell(ws, startRow, 3, 'SEGMENTASI', bgArgb, 'FF000000');
     DAYS_ORDER.forEach((d, i) => hdrCell(ws, startRow, 4 + i, d, bgArgb, 'FF000000'));
     hdrCell(ws, startRow, 11, 'Total', bgArgb, 'FF000000');
@@ -406,14 +405,12 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
           const q = qtyByDay[seg][day], rv = revByDay[seg][day];
           v = q ? rv / q : '-';
         } else {
-          const src = startRow < 20 ? qtyByDay : revByDay;
-          v = src[seg][day] || null;
+          v = srcDict[seg][day] || null;
         }
         dataCell(ws, r, 4 + di, v, typeof v === 'number' ? '#,##0' : null);
         if (typeof v === 'number' && !isArr) rowTotal += v;
       });
 
-      // Total kolom K
       let kVal;
       if (isArr) {
         const tq = DAYS_ORDER.reduce((s, d) => s + qtyByDay[seg][d], 0);
@@ -425,7 +422,6 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
       dataCell(ws, r, 11, kVal, typeof kVal === 'number' ? '#,##0' : null);
     });
 
-    // Total row
     const totalR = startRow + SEGMENTS.length + 1;
     const tcell  = ws.getCell(totalR, 3);
     tcell.value  = 'Total';
@@ -441,8 +437,7 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
         v = tq ? tr / tq : '-';
         grandTotalQ += tq; grandTotalRv += tr;
       } else {
-        const src = startRow < 20 ? qtyByDay : revByDay;
-        v = SEGMENTS.reduce((s, sg) => s + src[sg][day], 0) || null;
+        v = SEGMENTS.reduce((s, sg) => s + srcDict[sg][day], 0) || null;
         if (typeof v === 'number') grandTotal += v;
       }
       dataCell(ws, totalR, 4 + di, v, typeof v === 'number' ? '#,##0' : null);
@@ -452,9 +447,9 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
     dataCell(ws, totalR, 11, gt, gt ? '#,##0' : null);
   }
 
-  writeTable(5, 'FFFFC000', false);   // QTY
-  writeTable(15, 'FF92D050', false);  // Revenue
-  writeTable(25, 'FFBDD7EE', true);   // ARR
+  writeTable(5,  'FFFFC000', false, qtyByDay);  // QTY
+  writeTable(15, 'FF92D050', false, revByDay);  // Revenue
+  writeTable(25, 'FFBDD7EE', true,  revByDay);  // ARR
 
   [3, 3, 14, 10, 10, 10, 12, 12, 10, 10, 14].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
 }
