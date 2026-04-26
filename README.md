@@ -18,7 +18,7 @@ Web app untuk generate rekap bulanan hotel otomatis dari file laporan harian `.x
 4. Pilih **Source**: `Deploy from a branch`
 5. Pilih branch `main`, folder `/ (root)`
 6. Klik **Save**
-7. Website aktif di `https://username.github.io/rekap-hotel`
+7. Website aktif di `https://gyntx.github.io/rekap-web`
 
 ## Struktur File
 ```
