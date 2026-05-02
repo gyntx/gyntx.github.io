@@ -4,10 +4,10 @@ const SEGMENT_MAP = {
   'FIT': 'FIT', 'CA': 'COMPANY', 'COMPANY': 'COMPANY',
   'GOV': 'GOVERNMENT', 'GOVERNMENT': 'GOVERNMENT',
   'WALK IN': 'WALK IN', 'OTA': 'OTA',
-  'TA': 'TRAVEL AGENT', 'TRAVEL AGENT': 'TRAVEL AGENT',
+  'TA': 'TA', 'TRAVEL AGENT': 'TA',
   'COMPL': 'COMPLIMENT', 'COMPLIMENT': 'COMPLIMENT', 'COMPLIMENTARY': 'COMPLIMENT',
 };
-const SEGMENTS = ['FIT', 'COMPANY', 'GOVERNMENT', 'WALK IN', 'OTA', 'TRAVEL AGENT', 'COMPLIMENT'];
+const SEGMENTS = ['FIT', 'COMPANY', 'GOVERNMENT', 'WALK IN', 'OTA', 'TA', 'COMPLIMENT'];
 const DAYS_ORDER = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -166,7 +166,21 @@ async function parseXlsx(file, year, month) {
         const price    = parseFloat(String(r[7] || '0').replace(/,/g, '')) || 0;
         const segRaw   = String(r[13] || '').trim().toUpperCase();
         const seg      = SEGMENT_MAP[segRaw] || 'FIT';
-        guests.push({ roomType, price, segment: seg, dayOfWeek });
+        guests.push({
+          roomNo:      String(r[1] || '').trim(),
+          roomType,
+          name:        String(r[3] || '').trim(),
+          pax:         String(r[5] || '').trim(),
+          nationality: String(r[6] || '').trim(),
+          price,
+          company:     String(r[9] || '').trim(),
+          checkin:     String(r[10] || '').trim(),
+          checkout:    String(r[11] || '').trim(),
+          nights:      String(r[12] || '').trim(),
+          segment: seg,
+          keterangan:  String(r[14] || '').trim(),
+          dayOfWeek,
+        });
       }
     }
 
@@ -201,6 +215,7 @@ async function generateExcel(dailyData, monthLabel, totalRooms) {
   buildOccRecap(wb, dailyData, monthLabel, totalRooms);
   buildRevenuePerType(wb, dailyData, monthLabel);
   buildSegmentasi(wb, dailyData, monthLabel);
+  buildTamuRecap(wb, dailyData, monthLabel);
 
   const buffer = await wb.xlsx.writeBuffer();
   return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -455,6 +470,72 @@ function buildSegmentasi(wb, dailyData, monthLabel) {
 }
 
 // ─── RESULT & DOWNLOAD ────────────────────────────────────────────────────────
+// ─── SHEET 4: REKAPITULASI TAMU ─────────────────────────────────────────────
+function buildTamuRecap(wb, dailyData, monthLabel) {
+  const ws = wb.addWorksheet('REKAPITULASI TAMU');
+
+  ws.mergeCells('A1:F1'); ws.getCell('A1').value = 'REKAPITULASI TAMU MENGINAP';
+  ws.getCell('A1').font = { bold: true, size: 13 };
+  ws.getCell('A1').alignment = { horizontal: 'left', vertical: 'middle' };
+  ws.mergeCells('H1:M1'); ws.getCell('H1').value = monthLabel.toUpperCase();
+  ws.getCell('H1').font = { bold: true, size: 12 };
+  ws.getCell('H1').alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(1).height = 20;
+
+  const headers = ['No', 'Nomor\nKamar', 'Type\nKamar', 'Nama Tamu', 'Dewasa\n/Anak',
+                   'Kebangsaan', 'Harga Kamar', 'Perusahaan/Travel',
+                   'CheckIn', 'CheckOut', 'Lama\nMenginap', 'Segmentasi', 'Keterangan'];
+  headers.forEach((h, i) => hdrCell(ws, 3, i + 1, h, 'FF1F4E79'));
+  ws.getRow(3).height = 30;
+
+  const fmtDate = s => {
+    try {
+      const d = new Date(s);
+      if (isNaN(d)) return s;
+      return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getFullYear()).slice(-2)}`;
+    } catch { return s; }
+  };
+
+  let no = 0, totalHarga = 0;
+  dailyData.forEach(day => {
+    day.guests.forEach(g => {
+      no++;
+      const row = 3 + no;
+      const bg  = no % 2 === 0 ? 'FFF7FAFC' : 'FFFFFFFF';
+      const vals = [
+        no, g.roomNo, g.roomType, g.name, g.pax,
+        g.nationality, g.price, g.company,
+        fmtDate(g.checkin), fmtDate(g.checkout),
+        g.nights, g.segment, g.keterangan
+      ];
+      vals.forEach((v, ci) => {
+        const cell = ws.getCell(row, ci + 1);
+        cell.value  = v;
+        cell.border = allBorders;
+        cell.fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: bg } };
+        cell.alignment = { horizontal: [3, 7, 12].includes(ci) ? 'left' : 'center', vertical: 'middle' };
+        if (ci === 6) cell.numFmt = '#,##0';
+      });
+      totalHarga += g.price;
+    });
+  });
+
+  const tr = 3 + no + 1;
+  ws.mergeCells(`A${tr}:F${tr}`);
+  ws.getCell(tr, 1).value = 'TOTAL';
+  ws.getCell(tr, 1).font  = { bold: true };
+  ws.getCell(tr, 1).alignment = { horizontal: 'center' };
+  ws.getCell(tr, 7).value  = totalHarga;
+  ws.getCell(tr, 7).numFmt = '#,##0';
+  ws.getCell(tr, 7).font   = { bold: true };
+  for (let c = 1; c <= 13; c++) {
+    ws.getCell(tr, c).border = allBorders;
+    ws.getCell(tr, c).fill   = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFFC000' } };
+  }
+
+  [5, 8, 8, 28, 8, 10, 14, 20, 10, 10, 8, 12, 22].forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+}
+
 function showResult(dailyData, monthLabel) {
   progressSec.classList.add('hidden');
   resultSec.classList.remove('hidden');
@@ -469,7 +550,7 @@ function showResult(dailyData, monthLabel) {
     <div class="summary-card"><div class="value">${totalGuests}</div><div class="label">Total Tamu</div></div>
     <div class="summary-card"><div class="value">${(avgOcc * 100).toFixed(1)}%</div><div class="label">Rata-rata OCC</div></div>
     <div class="summary-card"><div class="value">Rp ${fmt(totalRevenue)}</div><div class="label">Total Room Revenue</div></div>
-    <div class="summary-card"><div class="value">3</div><div class="label">Sheet Dibuat</div></div>
+    <div class="summary-card"><div class="value">4</div><div class="label">Sheet Dibuat</div></div>
     <div class="summary-card"><div class="value">1</div><div class="label">File Output</div></div>
   `;
 
